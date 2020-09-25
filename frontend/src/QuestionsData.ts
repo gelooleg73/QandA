@@ -1,5 +1,3 @@
-import { wait } from '@testing-library/react';
-
 export interface QuestionData {
   questionId: number;
   title: string;
@@ -52,6 +50,10 @@ const questions: QuestionData[] = [
 ];
 
 export const getUnansweredQuestions = async (): Promise<QuestionData[]> => {
-  await wait(() => {}, { timeout: 500 });
+  await wait(500);
   return questions.filter((q) => q.answers.length === 0);
+};
+
+const wait = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };

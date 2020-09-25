@@ -1,9 +1,9 @@
+import React from 'react';
 import { FC } from 'react';
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import { QuestionData } from './QuestionsData';
 import { gray3 } from './Styles';
-//import React from 'react';
 
 interface Props {
   data: QuestionData;

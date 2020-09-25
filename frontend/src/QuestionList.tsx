@@ -3,9 +3,12 @@ import { FC } from 'react';
 import { css, jsx } from '@emotion/core';
 import { gray5, accent2 } from './Styles';
 import { QuestionData } from './QuestionsData';
+import { Question } from './Question';
+import React from 'react';
 
 interface Props {
   data: QuestionData[];
+  renderItem?: (item: QuestionData) => JSX.Element;
 }
 
 export const QuestionList: FC<Props> = ({ data, renderItem }) => {
