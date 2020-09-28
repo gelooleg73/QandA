@@ -25,6 +25,8 @@ export const HomePage = () => {
     console.log('TODO - move to the AskPage');
   };
 
+  //console.log('rendered -- HomePage');
+
   return (
     <Page>
       <div
