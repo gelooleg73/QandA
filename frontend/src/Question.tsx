@@ -1,15 +1,16 @@
-import React from 'react';
-import { FC } from 'react';
+import React, { FC } from 'react';
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import { QuestionData } from './QuestionsData';
-import { gray3 } from './Styles';
+import { gray3, gray2 } from './Styles';
+import { Link } from 'react-router-dom';
 
 interface Props {
   data: QuestionData;
+  showContent?: boolean;
 }
 
-export const Question: FC<Props> = ({ data }) => (
+export const Question: FC<Props> = ({ data, showContent = true }) => (
   <div
     css={css`
       padding: 10px 0px;
@@ -21,8 +22,29 @@ export const Question: FC<Props> = ({ data }) => (
         font-size: 19px;
       `}
     >
-      {data.title}
+      <Link
+        css={css`
+          text-decoration: none;
+          color: ${gray2};
+        `}
+        to={`questions/${data.questionId}`}
+      >
+        {data.title}
+      </Link>
     </div>
+    {showContent && (
+      <div
+        css={css`
+          padding-bottom: 10px;
+          font-size: 15px;
+          color: ${gray2};
+        `}
+      >
+        {data.content.length > 50
+          ? `${data.content.substring(0, 50)}...`
+          : data.content}
+      </div>
+    )}
     <div
       css={css`
         font-size: 12px;
@@ -31,7 +53,7 @@ export const Question: FC<Props> = ({ data }) => (
       `}
     >
       {`Asked by ${data.userName} on
-        ${data.created.toLocaleDateString()} ${data.created.toLocaleTimeString()}`}
+      ${data.created.toLocaleDateString()} ${data.created.toLocaleTimeString()}`}
     </div>
   </div>
 );
