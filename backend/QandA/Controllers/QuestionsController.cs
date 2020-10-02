@@ -58,8 +58,20 @@ namespace QandA.Controllers
             // TODO - call the data repository to save the question
             //var savedQuestion = _dataRepository.PostQuestion(questionPostRequest);
 
-            var savedQuestion =
-            _dataRepository.PostQuestion(new QuestionPostFullRequest
+            //var savedQuestion =
+            //_dataRepository.PostQuestion(new QuestionPostFullRequest
+            //{
+            //    Title = questionPostRequest.Title,
+            //    Content = questionPostRequest.Content,
+            //    UserId = "1",
+            //    UserName = "bob.test@test.com",
+            //    Created = DateTime.UtcNow
+            //});
+            //// TODO - return HTTP status code 201
+            //return CreatedAtAction(nameof(GetQuestion), new { questionId = savedQuestion.QuestionId }, savedQuestion);
+
+
+            var savedQuestion = _dataRepository.PostQuestion(new QuestionPostFullRequest
             {
                 Title = questionPostRequest.Title,
                 Content = questionPostRequest.Content,
@@ -67,14 +79,11 @@ namespace QandA.Controllers
                 UserName = "bob.test@test.com",
                 Created = DateTime.UtcNow
             });
-            // TODO - return HTTP status code 201
             return CreatedAtAction(nameof(GetQuestion), new { questionId = savedQuestion.QuestionId }, savedQuestion);
         }
 
         [HttpPut("{questionId}")]
-        public ActionResult<QuestionGetSingleResponse>
-        PutQuestion(int questionId,
-        QuestionPutRequest questionPutRequest)
+        public ActionResult<QuestionGetSingleResponse> PutQuestion(int questionId, QuestionPutRequest questionPutRequest)
         {
             // TODO - get the question from the data repository
             var question =
@@ -117,7 +126,16 @@ namespace QandA.Controllers
             {
                 return NotFound();
             }
-            var savedAnswer = _dataRepository.PostAnswer(answerPostRequest);
+            var savedAnswer =
+            _dataRepository.PostAnswer(new AnswerPostFullRequest
+            {
+                QuestionId = answerPostRequest.QuestionId.Value,
+                Content = answerPostRequest.Content,
+                UserId = "1",
+                UserName = "bob.test@test.com",
+                Created = DateTime.UtcNow
+            }
+            );
             return savedAnswer;
         }
     }
