@@ -14,6 +14,22 @@ export interface AnswerData {
   created: Date;
 }
 
+export interface QuestionDataFromServer {
+  questionId: number;
+  title: string;
+  content: string;
+  userName: string;
+  created: string;
+  answers: AnswerDataFromServer[];
+}
+
+export interface AnswerDataFromServer {
+  answerId: number;
+  content: string;
+  userName: string;
+  created: string;
+}
+
 const questions: QuestionData[] = [
   {
     questionId: 1,
@@ -54,16 +70,16 @@ export const getUnansweredQuestions = async (): Promise<QuestionData[]> => {
   return questions.filter((q) => q.answers.length === 0);
 };
 
+const wait = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 export const getQuestion = async (
   questionId: number,
 ): Promise<QuestionData | null> => {
   await wait(500);
   const results = questions.filter((q) => q.questionId === questionId);
   return results.length === 0 ? null : results[0];
-};
-
-const wait = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export const searchQuestions = async (
@@ -119,3 +135,14 @@ export const postAnswer = async (
   question.answers.push(answerInQuestion);
   return answerInQuestion;
 };
+
+export const mapQuestionFromServer = (
+  question: QuestionDataFromServer,
+): QuestionData => ({
+  ...question,
+  created: new Date(question.created.substr(0, 19)),
+  answers: question.answers.map((answer) => ({
+    ...answer,
+    created: new Date(answer.created.substr(0, 19)),
+  })),
+});

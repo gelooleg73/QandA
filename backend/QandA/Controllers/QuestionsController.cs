@@ -3,6 +3,8 @@ using QandA.Data;
 using QandA.Data.Models;
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.SignalR;
+using QandA.Hubs;
 
 namespace QandA.Controllers
 {
@@ -11,11 +13,14 @@ namespace QandA.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly IDataRepository _dataRepository;
+        private readonly IHubContext<QuestionsHub> _questionHubContext;
 
-        public QuestionsController(IDataRepository dataRepository)
+        public QuestionsController(IDataRepository dataRepository,
+            IHubContext<QuestionsHub> questionHubContext)
         {
             // TODO - set reference to _dataRepository
             _dataRepository = dataRepository;
+            _questionHubContext = questionHubContext;
         }
 
         [HttpGet]
@@ -120,22 +125,28 @@ namespace QandA.Controllers
         public ActionResult<AnswerGetResponse>
         PostAnswer(AnswerPostRequest answerPostRequest)
         {
-            var questionExists =
-            _dataRepository.QuestionExists(answerPostRequest.QuestionId.Value);
+            var questionExists = _dataRepository.QuestionExists(answerPostRequest.QuestionId.Value);
             if (!questionExists)
             {
                 return NotFound();
             }
-            var savedAnswer =
-            _dataRepository.PostAnswer(new AnswerPostFullRequest
-            {
-                QuestionId = answerPostRequest.QuestionId.Value,
-                Content = answerPostRequest.Content,
-                UserId = "1",
-                UserName = "bob.test@test.com",
-                Created = DateTime.UtcNow
-            }
+            var savedAnswer = _dataRepository.PostAnswer(new AnswerPostFullRequest
+                {
+                    QuestionId = answerPostRequest.QuestionId.Value,
+                    Content = answerPostRequest.Content,
+                    UserId = "1",
+                    UserName = "bob.test@test.com",
+                    Created = DateTime.UtcNow
+                }
             );
+
+            _questionHubContext.Clients.Group(
+                $"Question-{answerPostRequest.QuestionId.Value}")
+                .SendAsync(
+                "ReceiveQuestion",
+                _dataRepository.GetQuestion(
+                answerPostRequest.QuestionId.Value));
+
             return savedAnswer;
         }
     }
