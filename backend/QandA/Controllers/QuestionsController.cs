@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.SignalR;
 using QandA.Hubs;
+using System.Threading.Tasks;
 
 namespace QandA.Controllers
 {
@@ -14,13 +15,16 @@ namespace QandA.Controllers
     {
         private readonly IDataRepository _dataRepository;
         private readonly IHubContext<QuestionsHub> _questionHubContext;
+        private readonly IQuestionCache _cache;
 
         public QuestionsController(IDataRepository dataRepository,
-            IHubContext<QuestionsHub> questionHubContext)
+            IHubContext<QuestionsHub> questionHubContext,
+            IQuestionCache questionCache)
         {
             // TODO - set reference to _dataRepository
             _dataRepository = dataRepository;
             _questionHubContext = questionHubContext;
+            _cache = questionCache;
         }
 
         [HttpGet]
@@ -52,24 +56,32 @@ namespace QandA.Controllers
             }
         }
 
+        //[HttpGet("unanswered")]
+        //public IEnumerable<QuestionGetManyResponse> GetUnansweredQuestions()
+        //{
+        //    return _dataRepository.GetUnansweredQuestions();
+        //}
+
+
         [HttpGet("unanswered")]
-        public IEnumerable<QuestionGetManyResponse> GetUnansweredQuestions()
+        public async Task<IEnumerable<QuestionGetManyResponse>> GetUnansweredQuestions()
         {
-            return _dataRepository.GetUnansweredQuestions();
+            return await _dataRepository.GetUnansweredQuestionsAsync();
         }
 
         [HttpGet("{questionId}")]
         public ActionResult<QuestionGetSingleResponse> GetQuestion(int questionId)
         {
-            // TODO - call the data repository to get the question
-            var question = _dataRepository.GetQuestion(questionId);
-            // TODO - return HTTP status code 404 if the question isn't found
+            var question = _cache.Get(questionId);
             if (question == null)
             {
-                return NotFound();
+                question = _dataRepository.GetQuestion(questionId);
+                if (question == null)
+                {
+                    return NotFound();
+                }
+                _cache.Set(question);
             }
-
-            // TODO - return question in response with status code 200
             return question;
         }
 
@@ -121,6 +133,9 @@ namespace QandA.Controllers
                 question.Content : questionPutRequest.Content;
             // TODO - call the data repository with the updated question model to update the question in the database
             var savedQuestion = _dataRepository.PutQuestion(questionId, questionPutRequest);
+
+            _cache.Remove(savedQuestion.QuestionId);
+
             // TODO - return the saved question
             return savedQuestion;
         }
@@ -134,12 +149,13 @@ namespace QandA.Controllers
                 return NotFound();
             }
             _dataRepository.DeleteQuestion(questionId);
+            _cache.Remove(questionId);
+
             return NoContent();
         }
 
         [HttpPost("answer")]
-        public ActionResult<AnswerGetResponse>
-        PostAnswer(AnswerPostRequest answerPostRequest)
+        public ActionResult<AnswerGetResponse> PostAnswer(AnswerPostRequest answerPostRequest)
         {
             var questionExists = _dataRepository.QuestionExists(answerPostRequest.QuestionId.Value);
             if (!questionExists)
@@ -155,6 +171,8 @@ namespace QandA.Controllers
                     Created = DateTime.UtcNow
                 }
             );
+
+            _cache.Remove(answerPostRequest.QuestionId.Value);
 
             _questionHubContext.Clients.Group(
                 $"Question-{answerPostRequest.QuestionId.Value}")
